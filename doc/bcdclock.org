@@ -48,16 +48,43 @@ state. This has the following advantages:
 
 ** Function entry points
 
-Labels for function entry points end with '_R' in the name. The
-main module provides function entry point ("jump labels") without
-'_R' suffix containing a banksel statement to make the function
-reachable from anywhere. E.g.:
+Right at the start of the program memory there are jump vectors for
+all subroutine entries. They enable the correct page bits of the real
+function entry point and jump to that location. That way functions
+might be located in arbitrary program pages. After a function call,
+the caller has to switch back to his desired program page.
+
+The real function entry points carry suffix '_R' in their name, so that
+the function vectors and function don't have to. For example:
 
 #+begin_example
 some_function
     banksel some_function_R
     goto some_function_R
 #+end_example
+
+** BCD decoding
+
+For decoding from binary to BCD, there are jump vectors located right
+after the function vectors in the main program. The zero_sixty table
+is reused for all hours, minutes and seconds. There is an additional
+zero_twelve table for decoding hours to 12 hour clock.
+
+** Button FSM
+
+The button state machine is a separate module that is reusable for
+multiple input buttons. It uses two functions as entry points to
+pass a input sample event and a timer tick event to state machine.
+For storing the state and counter value, two bytes are needed that
+are expected to be allocated outside in consecutive registers.
+The base register is expected to be passed within FSR. That way
+the state variable can be allocated in arbitrary banks.
+
+** Output
+
+The output routines just copy the value from a shadow register to
+their corresponding port, selecting their respective column by writing
+a fixed value to PORTC.
 
 * Using pk2cmd
   
