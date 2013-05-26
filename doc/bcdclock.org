@@ -1,0 +1,171 @@
+#+TITLE: BCDclock coding internals
+
+* Coding conventions
+
+** Variables
+
+4 variables are defined in the UDATA_SHR segment:
+- reg_a
+- reg_b
+- reg_c
+- reg_d
+
+No banksel is needed for these They can be used for passing
+parameters to functions and to pass return values back. Parameters
+and return values should start from reg_a to reg_d. These variables
+can also be used as internal scratch pad for functions. When calling
+a function, there is no guarantee that those variable stay
+unmodified.
+
+** Argument passing
+
+For normal arguments, W and reg_a to reg_d might be used. To avoid
+copying, FSR can be used to pass "pointers" to file registers to a
+functions.  Care needs to be taken to make sure multiple registers
+are in adjacent locations. There are two main advantages:
+
+- No banksel necessary within functions if file register is passed
+  via FSR. 
+- The copying of state for a module (or function) can be done within
+  the function, no need for the caller to take care of that.
+
+Return values might be directly copied via FSR, passed in W or
+reg_a to reg_d
+
+** Encoding States
+
+There are multiple ways to encode states. If the number of states
+is less or equal than 8, it might be useful to use one bit per
+state. This has the following advantages:
+- No compare necessary for the state switch, bit test is sufficient
+  (shorter code)
+- rotate instructions can be used to switch between adjacent state
+  bits (make sure carry is cleared)
+- After program start, state variable are initialized to
+  zero. Within the state switch, there will be no bit set. This can
+  be easily detected and used to run initialization code if
+  necessary
+
+** Function entry points
+
+Labels for function entry points end with '_R' in the name. The
+main module provides function entry point ("jump labels") without
+'_R' suffix containing a banksel statement to make the function
+reachable from anywhere. E.g.:
+
+#+begin_example
+some_function
+    banksel some_function_R
+    goto some_function_R
+#+end_example
+
+* Using pk2cmd
+  
+- show list of supported devices
+  #+begin_example
+  pk2cmd -?P
+  #+end_example
+
+- read pic memory
+  #+begin_example
+  pk2cmd -PPIC16F505 -GF dump.hex
+  #+end_example
+
+- disassemble hex dump
+  #+begin_example
+  gpdasm -p p16f505 dump.hex
+  #+end_example
+
+- write new hex file
+  #+begin_example
+  pk2cmd -PPIC16F505 -M -F ../bcdclock/bcdclock.hex
+  #+end_example
+
+- power on pic
+  #+begin_example
+  pk2cmd -PPIC16F505 -T
+  #+end_example
+
+* PIC tricks
+
+** Carry and Zero Flag
+
+| Command                  | Z | C | Comment                                        |
+|--------------------------+---+---+------------------------------------------------|
+| DECF/INCF                | x |   | sets/clears the zero flag                      |
+| DECFSZ/INCFSZ            |   |   | does *not* affect the zero flag                |
+| MOVLW                    |   |   | does *not* affect the zero flag                |
+| RETLW                    |   |   | does *not* affect the zero flag                |
+| IORLW 0x00 or ANDLW 0xFF | x |   | Test if W contrains 0, *does* affect zero flag |
+| MOVF register,F          | x |   | does not change register but sets zero flag    |
+| RLF and RRF              |   | x | affects Carry, but not Zero                    |
+  
+These are *not* available for 16F505:
+- SUBLW
+- ADDLW (which would be handy to clear C and DC
+
+** Compare and branch
+
+#+BEGIN_EXAMPLE
+_CMP   movlw CompTo
+       subwf SomeVar,W
+_BEQ   btfsc STATUS,Z
+       goto _Equal
+_BLT   btfss STATUS,C
+       goto _Less
+_BGE   btfsc STATUS,C
+       goto _GtOrEq
+#+END_EXAMPLE
+
+** Test W register for 0 and clear carray
+
+#+BEGIN_EXAMPLE
+iorlw  0x00
+btfsc  STATUS,Z
+goto   _someLabel
+bcf    STATUS.C
+#+END_EXAMPLE   
+
+** Exchange two file registers
+
+#+BEGIN_EXAMPLE
+_EXCH  movf  filereg2,W
+       xorwf filereg1,F
+       xorwf filereg1,W
+       xorwf filereg1,F
+       movwf filereg2
+#+END_EXAMPLE
+
+* State Diagrams
+
+** Button Typematic State Machine
+
+#+begin_src plantuml :file button-state-machine.png
+@startuml
+
+[*]      --> IDLE
+IDLE     --> DEBOUNCE : sample_on()
+DEBOUNCE --> IDLE     : sample_off()
+DEBOUNCE --> REPEAT_1 : sample_on()[cnt==0]/\nBUTTON_DOWN
+REPEAT_1 --> REPEAT_2 : tick()[cnt==0]/\nBUTTON_DOWN
+REPEAT_2 --> REPEAT_2 : tick()[cnt==0]/\nBUTTON_DOWN
+REPEAT_2 --> IDLE     : sample_off()/\nBUTTON_UP
+REPEAT_1 --> IDLE     : sample_off()/\nBUTTON_UP
+
+DEBOUNCE : entry /cnt=DEBOUNCE_COUNT
+DEBOUNCE : sample_on() [cnt>0] /--cnt
+
+REPEAT_1 : entry /cnt=REPEAT_COUNT_1
+REPEAT_1 : tick() [cnt>0] /--cnt
+
+REPEAT_2 : entry /cnt=REPEAT_COUNT_2
+REPEAT_2 : tick() [cnt>0] /--cnt
+#+end_src
+
+#+RESULTS:
+[[file:button-state-machine.png]]
+
+
+* References
+
+- http://picprojects.org.uk/projects/pictips.htm#dirty%20return

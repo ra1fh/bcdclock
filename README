@@ -1,0 +1,55 @@
+BCDclock
+========
+
+This is an alternative firmware for the Anelace BCDclock.
+
+Building
+--------
+
+You need gputils to build the firmware. To flash the firmware
+to the device, I've successfully used pk2cmd with a PICkit2.
+Build bcdclock with:
+
+    $ make
+
+In the src directory, you'll find the file bcdclock.hex, which
+can be programmed to the device.
+
+Simulation
+----------
+
+Simulation requires gpsim with 16F505 support, which is currently not
+available in the released gpsim version. To run the simulation:
+
+    $ make sim
+
+Usage
+-----
+
+The firmware has two modes:
+
+- clock mode
+- configure mode
+
+SW3 is used to switch between both modes. In clock mode, SW1 and SW2
+can be used to set the time.
+
+In configure mode, you can cycle through the settings with SW1. SW2
+changes settings. In this mode, each LED column represents one
+setting. The blinking column is the currently active setting which
+would be modified by SW2.
+
+The current settings are:
+
+   O     O 	   O
+	  	   		
+   O  O  O 	O  O
+	  	   		
+O  O  O  O 	O  O
+ 	   	   	 	
+O  O  O  O 	O  O
+
+         |  |  +--- brightness
+         |  +------ seconds mode
+         +--------- 12/24 hours mode
+

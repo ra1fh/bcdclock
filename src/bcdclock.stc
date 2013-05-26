@@ -1,0 +1,364 @@
+
+# This file was written by gpsim.
+
+# You can use this file for example like this:
+#     gpsim -s mycode.cod -c netlist.stc
+
+# If you want to add commands, you can create another .stc file
+# and load this file from it. Something like this:
+# ----------- myproject.stc ---------------
+# load s mycode.cod
+# frequency 12000000
+# load c netlist.stc
+# -----------------------------------------
+# You can then just load this new file:
+#     gpsim -c myproject.stc
+# and use netlist.stc whenever you save from the breadboard.
+#
+
+
+# Processor position:
+module library libgpsim_modules.so.0.0
+load p16f505 bcdclock.cod
+
+# Modules:
+p16f505.BreakOnReset = true
+p16f505.SafeMode = true
+p16f505.UnknownMode = true
+p16f505.WarnMode = true
+p16f505.xpos = 216
+p16f505.ypos = 72
+
+module load demux demux
+demux.xpos = 216
+demux.ypos = 204
+
+module load and2 and2_26
+and2_26.xpos = 612
+and2_26.ypos = 456
+
+module load led LED26
+LED26.ActiveState = high
+LED26.color = red
+LED26.xpos = 612
+LED26.ypos = 696
+
+module load and2 and2_25
+and2_25.xpos = 552
+and2_25.ypos = 456
+
+module load led LED25
+LED25.ActiveState = high
+LED25.color = red
+LED25.xpos = 564
+LED25.ypos = 696
+
+module load and2 and2_24
+and2_24.xpos = 492
+and2_24.ypos = 456
+
+module load led LED24
+LED24.ActiveState = high
+LED24.color = red
+LED24.xpos = 516
+LED24.ypos = 696
+
+module load and2 and2_23
+and2_23.xpos = 432
+and2_23.ypos = 456
+
+module load led LED23
+LED23.ActiveState = high
+LED23.color = red
+LED23.xpos = 468
+LED23.ypos = 696
+
+module load and2 and2_22
+and2_22.xpos = 372
+and2_22.ypos = 456
+
+module load led LED22
+LED22.ActiveState = high
+LED22.color = red
+LED22.xpos = 420
+LED22.ypos = 696
+
+module load and2 and2_21
+and2_21.xpos = 312
+and2_21.ypos = 456
+
+module load led LED21
+LED21.ActiveState = high
+LED21.color = red
+LED21.xpos = 372
+LED21.ypos = 696
+
+module load and2 and2_20
+and2_20.xpos = 612
+and2_20.ypos = 396
+
+module load led LED20
+LED20.ActiveState = high
+LED20.color = red
+LED20.xpos = 612
+LED20.ypos = 636
+
+module load and2 and2_19
+and2_19.xpos = 552
+and2_19.ypos = 396
+
+module load led LED19
+LED19.ActiveState = high
+LED19.color = red
+LED19.xpos = 564
+LED19.ypos = 636
+
+module load and2 and2_18
+and2_18.xpos = 492
+and2_18.ypos = 396
+
+module load led LED18
+LED18.ActiveState = high
+LED18.color = red
+LED18.xpos = 516
+LED18.ypos = 636
+
+module load and2 and2_17
+and2_17.xpos = 432
+and2_17.ypos = 396
+
+module load led LED17
+LED17.ActiveState = high
+LED17.color = red
+LED17.xpos = 468
+LED17.ypos = 636
+
+module load and2 and2_16
+and2_16.xpos = 372
+and2_16.ypos = 396
+
+module load led LED16
+LED16.ActiveState = high
+LED16.color = red
+LED16.xpos = 420
+LED16.ypos = 636
+
+module load and2 and2_15
+and2_15.xpos = 312
+and2_15.ypos = 396
+
+module load led LED15
+LED15.ActiveState = high
+LED15.color = red
+LED15.xpos = 372
+LED15.ypos = 636
+
+module load and2 and2_14
+and2_14.xpos = 612
+and2_14.ypos = 336
+
+module load led LED14
+LED14.ActiveState = high
+LED14.color = red
+LED14.xpos = 612
+LED14.ypos = 588
+
+module load and2 and2_13
+and2_13.xpos = 552
+and2_13.ypos = 336
+
+module load led LED13
+LED13.ActiveState = high
+LED13.color = red
+LED13.xpos = 564
+LED13.ypos = 588
+
+module load and2 and2_12
+and2_12.xpos = 492
+and2_12.ypos = 336
+
+module load led LED12
+LED12.ActiveState = high
+LED12.color = red
+LED12.xpos = 516
+LED12.ypos = 588
+
+module load and2 and2_11
+and2_11.xpos = 432
+and2_11.ypos = 336
+
+module load led LED11
+LED11.ActiveState = high
+LED11.color = red
+LED11.xpos = 468
+LED11.ypos = 588
+
+module load and2 and2_10
+and2_10.xpos = 372
+and2_10.ypos = 336
+
+module load led LED10
+LED10.ActiveState = high
+LED10.color = red
+LED10.xpos = 420
+LED10.ypos = 588
+
+module load and2 and2_9
+and2_9.xpos = 612
+and2_9.ypos = 276
+
+module load led LED9
+LED9.ActiveState = high
+LED9.color = red
+LED9.xpos = 612
+LED9.ypos = 528
+
+module load and2 and2_8
+and2_8.xpos = 552
+and2_8.ypos = 276
+
+module load led LED8
+LED8.ActiveState = high
+LED8.color = red
+LED8.xpos = 516
+LED8.ypos = 528
+
+module load and2 and2_7
+and2_7.xpos = 480
+and2_7.ypos = 276
+
+module load led LED7
+LED7.ActiveState = high
+LED7.color = red
+LED7.xpos = 420
+LED7.ypos = 528
+
+module load push_button SW1
+SW1.xpos = 48
+SW1.ypos = 60
+
+module load push_button SW2
+SW2.xpos = 48
+SW2.ypos = 120
+
+module load push_button vpls
+vpls.xpos = 48
+vpls.ypos = 180
+
+# Connections:
+node ROW0
+attach ROW0 portc0 and2_26.in0 and2_25.in0 and2_24.in0 and2_23.in0 and2_22.in0
+
+node ROW1
+attach ROW1 portc1 and2_20.in0 and2_19.in0 and2_18.in0 and2_17.in0 and2_16.in0
+
+node ROW2
+attach ROW2 portc2 and2_14.in0 and2_13.in0 and2_12.in0 and2_11.in0 and2_10.in0
+
+node ROW3
+attach ROW3 portc3 and2_9.in0 and2_21.in0 and2_8.in0 and2_15.in0 and2_7.in0
+
+node COL1
+attach COL1 Demux.Y0 and2_26.in1 and2_20.in1 and2_14.in1 and2_9.in1
+
+node COL2
+attach COL2 Demux.Y1 and2_25.in1 and2_19.in1 and2_13.in1 and2_21.in1
+
+node COL3
+attach COL3 Demux.Y2 and2_24.in1 and2_18.in1 and2_12.in1 and2_8.in1
+
+node COL4
+attach COL4 Demux.Y3 and2_23.in1 and2_17.in1 and2_11.in1 and2_15.in1
+
+node COL5
+attach COL5 Demux.Y4 and2_22.in1 and2_16.in1 and2_10.in1 and2_7.in1
+
+node D26
+attach D26 and2_26.out LED26.in
+
+node D25
+attach D25 and2_25.out LED25.in
+
+node D24
+attach D24 and2_24.out LED24.in
+
+node D23
+attach D23 and2_23.out LED23.in
+
+node D22
+attach D22 and2_22.out LED22.in
+
+node D21
+attach D21 and2_21.out LED21.in
+
+node D20
+attach D20 and2_20.out LED20.in
+
+node D19
+attach D19 and2_19.out LED19.in
+
+node D18
+attach D18 and2_18.out LED18.in
+
+node D17
+attach D17 and2_17.out LED17.in
+
+node D16
+attach D16 and2_16.out LED16.in
+
+node D15
+attach D15 and2_15.out LED15.in
+
+node D14
+attach D14 and2_14.out LED14.in
+
+node D13
+attach D13 and2_13.out LED13.in
+
+node D12
+attach D12 and2_12.out LED12.in
+
+node D11
+attach D11 and2_11.out LED11.in
+
+node D10
+attach D10 and2_10.out LED10.in
+
+node D9
+attach D9 and2_9.out LED9.in
+
+node D8
+attach D8 and2_8.out LED8.in
+
+node D7
+attach D7 and2_7.out LED7.in
+
+node A
+attach A portb0 Demux.S0
+
+node B
+attach B portb1 Demux.S1
+
+node C
+attach C portb2 Demux.S2
+
+node INPUT1
+attach INPUT1 portc5 SW1.out
+
+node INPUT2
+attach INPUT2 portc4 SW2.out
+
+node INPUT3
+attach INPUT3 portb3 vpls.out
+
+scope.ch0 = "portb0"
+scope.ch1 = "portb1"
+scope.ch2 = "portb2"
+scope.ch3 = "portc0"
+scope.ch4 = "portc1"
+scope.ch5 = "portc2"
+scope.ch6 = "portc3"
+
+# set verbose
+
+# End.
