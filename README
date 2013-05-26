@@ -41,13 +41,13 @@ would be modified by SW2.
 
 The current settings are:
 
-   O     O 	   O
-	  	   		
-   O  O  O 	O  O
-	  	   		
-O  O  O  O 	O  O
- 	   	   	 	
-O  O  O  O 	O  O
+   O     O     O
+                
+   O  O  O  O  O
+                
+O  O  O  O  O  O
+                
+O  O  O  O  O  O
 
          |  |  +--- brightness
          |  +------ seconds mode
