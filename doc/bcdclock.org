@@ -192,6 +192,12 @@ REPEAT_2 : tick() [cnt>0] /--cnt
 #+RESULTS:
 [[file:button-state-machine.png]]
 
+* Attaching the programmer
+
+The following drawing shows how to connect the PICkit programmer
+to the microcontroller.
+
+file:programmer.png
 
 * References
 
