@@ -38,97 +38,164 @@
 		#include	"button.h"
 		#include	"sub.h"
 
-;***** CONFIGURATION ****************************************************
+;****** CONFIGURATION ***************************************************
 					; ext reset, no code protect, no watchdog 
 		__CONFIG    _MCLRE_OFF & _CP_OFF & _WDT_OFF & _XT_OSC
 
+;****** MACROS **********************************************************
+
+;;; output ports
 #define PORT_BIT_SW1		PORTC,5
 #define PORT_BIT_SW2		PORTC,4
 #define PORT_BIT_SW3		PORTB,2
 #define PORT_BIT_CLOCK		PORTB,3
+
+;;; bits in the input_flags register
+;;; that contains the input state
 #define SHADOW_BIT_SW1		input_flags,0
 #define SHADOW_BIT_SW2		input_flags,1
 #define SHADOW_BIT_SW3		input_flags,2
 #define SHADOW_BIT_CLOCK	input_flags,3
+
+;;; bitmask to get single input line from input_flags
 #define SHADOW_MASK_SW1 	1 << 0
 #define SHADOW_MASK_SW2 	1 << 1
 #define SHADOW_MASK_SW3 	1 << 2
 
+;;; column state used by the output state machines
+;;; that display the columns of the clock
 #define OUTPUT_STATE_COL1	0
 #define OUTPUT_STATE_COL2	1
 #define OUTPUT_STATE_COL3	2
 #define OUTPUT_STATE_COL4	3
 #define OUTPUT_STATE_COL5	4
+
+;;; The OUTPUT_STATE_DUTY_BIT indicates overflow when cycling through
+;;; through the brightness (duty cycle) setting. Bit 2 means
+;;; when cycling through 000, 001, 010, 011 the next step (100)
+;;; activates bit 2 and we reset to 000. The register is
+;;; output_state_wait_duty. Don't confuse with output_state_wait_counter
 #define OUTPUT_STATE_DUTY_BIT 2
+
+;;; configuration bits for different clock modes:
+;;; nosec: don't display seconds
+;;; blink: a bit that is switched with 2HZ for blinking
+;;;        in configuration mode
+;;; 12hour: 12hour and 24hour configuration bit
 #define	OUTPUT_STATE_CONF_NOSEC		0
 #define OUTPUT_STATE_CONF_BLINK		1
 #define OUTPUT_STATE_CONF_12HOUR	2
 
+;;; Main state machine for clock operation
+;;; clock: display clock
+;;; brightness: configure brightness
+;;; seconds: configure second display
+;;; 12hour: configure 12hour 24hour mode
 #define MODE_STATE_CLOCK 		0
 #define MODE_STATE_BRIGHTNESS 	1
 #define MODE_STATE_SECONDS 		2
 #define MODE_STATE_12HOUR		3
+
+;;; Events the main state machine reacts to
 #define	MODE_EVENT_SW1			0
 #define MODE_EVENT_SW2			1
 #define MODE_EVENT_SW3			2
 
+;;; Actions the main state machines fire when
+;;; events or state changes happen
 #define	MODE_ACTION_MINUTES		0
 #define MODE_ACTION_HOURS		1
 #define	MODE_ACTION_BRIGHTNESS	2
 #define MODE_ACTION_SECONDS		3
 #define	MODE_ACTION_12HOUR		4
 
+;;; how many cycles to wait until input signal is considered stable
 #define CLOCK_DEBOUNCE_COUNT .4
-#define CLOCK_TICK_COUNT_1HZ .100
-#define CLOCK_TICK_COUNT_2HZ .50
 
-		GLOBAL reg_a, reg_b, reg_c, reg_d
+;;; divider to generate 1HZ from 100HZ mains frequency
+#define CLOCK_TICK_COUNT_1HZ .100
+
+;;; divider to generate 2HZ from 100HZ mains frequency
+#define CLOCK_TICK_COUNT_2HZ .50
 		
 ;***** VARIABLE DEFINITIONS *********************************************
 
+		;; make symbols visible to other modules
+		GLOBAL reg_a, reg_b, reg_c, reg_d
+
 DATA_S	UDATA_SHR
+
+;;; The following variables are used for passing parameters to
+;;; functions and to pass return values back. Parameters and return
+;;; values should start from reg_a to reg_d. These variables can also
+;;; be used as internal scratch pad for functions. When calling
+;;; a function, there is no guarantee that those variable stay
+;;; unmodified.
 reg_a			res	1
 reg_b			res	1
 reg_c			res	1
 reg_d			res 1
 
+;;; input line state shadow register
 input_flags		res 1
+;;; tick state register used for generating 100Hz clock
 tick_state		res	1
 
+;;; bank_0 is an ordenary label to be used in banksel
 DATA_0	UDATA   0x10
-
 bank_0
+
+;;; counters representing the current time
 clock_hour		res 1
 clock_min		res 1
 clock_sec		res 1
 clock_milli		res 1
 
+;;; shadow registers which contain the bit for the output port
+;;; for a single column. reasoning behind these is that it's
+;;; a bit more work to calculate these. and they change only
+;;; maximum once per seconds. so caching saves some cycles
 output_shadow_col_1 res 1
 output_shadow_col_2 res 1
 output_shadow_col_3 res 1
 output_shadow_col_4 res 1
 output_shadow_col_5 res 1
-	
+
+;;; the state register for displaying the columns
 output_state	res 1
+
+;;; the configuration and blink bits, see above
 output_state_conf res 1
+
+;;; duty cycle from 0-3 for the brightness
 output_state_wait_duty   	res 1
+
+;;; this counter counts the output cycles. only if is
+;;; greater or equal the selected output_state_wait_duty,
+;;; the output will get displayed
 output_state_wait_counter	res 1
 
+;;; main state machine register
 mode_state		res 1
+;;; action bitfield that are results from state transitions
+;;; of the Main state machine
 mode_state_actions res 1
 
 DATA_1 UDATA	0x30
-
 bank_1
+
+;;; state machine registers for the button state
 switch_state_1	res 2
 switch_state_2	res 2
 switch_state_3	res 2
 
 ;***** RC CALIBRATION ***************************************************
+		
 RCCAL   CODE    0x3FF		; processor reset vector
         res 1				; holds internal RC cal value, as a movlw k
 
 ;***** RESET VECTOR *****************************************************
+		
 RESET	CODE    0x000		; effective reset vector
 		movwf   OSCCAL		; apply internal RC factory calibration
 
@@ -136,6 +203,20 @@ start	pagesel main_R
 		goto	main_R
 
 ;***** JUMP VECTORS *****************************************************
+
+;;; The target address of call instructions has to be within the lower 256
+;;; byte of each 512 byte page as bit 8 is hardcoded to 0. For goto there
+;;; is no such restriction. Therefore provide a number of function entry
+;;; points here so that functions can be reached anywhere in memory.
+;;;
+;;; I believe there should be more pagesel statement in the main code
+;;; section, since there is no guarantee that it ends up below 0x200.
+;;; It does for me currently, and hence the code works, but it could
+;;; easily break.
+;;;
+;;; For more info, see:
+;;; http://www.talkingelectronics.com/projects/Elektor/Gooligum%20PIC%20Tutorials/PIC_Base_A_3.pdf
+
 tick_sample
 		pagesel tick_sample_R
 		goto	tick_sample_R
@@ -206,15 +287,24 @@ get_zero_twelve
 		pagesel	get_zero_twelve_R
 		goto	get_zero_twelve_R
 
+;;; include jump tables from other modules. in this case they
+;;; are defined as macro in the header file
+
 ;;;		button-fsm.asm
 		button_fsm_jump_vectors
 
 ;;; 	bcdclock-sub.asm
 		bcdclock_sub_jump_vectors
 
+;***** BCD ENCODING TABLES **********************************************
+
+;;; new code section, can be located anywhere in memory.
+;;; that means we need to pagesel so that addwf works correctly.
 JUMP	CODE
 
-;;; 	bcd coding from 0-59 to low/high
+;;; bcd coding from 0-59 to low/high
+;;;	W:   number to decode
+;;; RET: number in BCD format
 get_zero_sixty_R
 		pagesel $
 		addwf	PCL,f
@@ -279,7 +369,10 @@ get_zero_sixty_R
 		dt		0x58
 		dt		0x59
 
-;;; 	bcd coding from 0-23 for 12 hour clock
+;;; bcd coding from 0-23 for 12 hour clock
+;;; please note the bcd values repeat
+;;; W:   number to decode
+;;; RET: bcd encoded value in 12 hour format
 get_zero_twelve_R
 		pagesel $
 		addwf	PCL,f
@@ -318,6 +411,8 @@ MAIN	CODE
 ;;;
 ;;; 	Output Routines
 ;;;
+;;; select output column via port b and copy output shadow register
+;;; to port c
 
 output_column_1_R
 		clrf	PORTC
@@ -364,23 +459,27 @@ output_column_5_R
 		movwf	PORTC
 		retlw	0
 
+;;; clear output, all LEDs off
 output_clear_R
 		clrf	PORTC
 		movlw	0x05
 		movwf	PORTB
 		retlw	0
 
+;;; cycle through duty cycle setting from 0 to max duty bit
 output_set_duty_cycles_R
 		incf	output_state_wait_duty,f
 		btfsc	output_state_wait_duty,OUTPUT_STATE_DUTY_BIT
 		clrf	output_state_wait_duty
 		retlw	0
 
+;;; toggle the seconds bit in output state register
 output_toggle_seconds_R
 		movlw	1 << OUTPUT_STATE_CONF_NOSEC
 		xorwf	output_state_conf,f
 		retlw	0
 
+;;; toggle 12 hour bit in output state register
 output_toggle_12hour_R
 		movlw	1 << OUTPUT_STATE_CONF_12HOUR
 		xorwf	output_state_conf,f
@@ -391,6 +490,7 @@ output_toggle_12hour_R
 ;;; 	Read inputs into shadow register
 ;;;
 read_inputs_R
+		;; switch dual use RB2 to input
 		clrf	PORTB
 		clrf	PORTC
 		clrf	input_flags
@@ -402,7 +502,8 @@ read_inputs_R
 		;;        ----1---   RB3 input
 		;;        -----1--   RB2 input
 		tris	PORTB
-		
+
+		;; read input lines into shadow register
 		btfss	PORT_BIT_SW1
 		bsf		SHADOW_BIT_SW1
 		btfss	PORT_BIT_SW2
@@ -411,7 +512,8 @@ read_inputs_R
 		bsf		SHADOW_BIT_SW3
 		btfsc	PORT_BIT_CLOCK
 		bsf		SHADOW_BIT_CLOCK
-		
+
+		;; switch dual use RB2 back to output
 		movlw	b'00111000'
 		;;        x-------   unused
 		;;        -x------   unused
@@ -427,12 +529,17 @@ read_inputs_R
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; 	Generate 100HZ tick from the clock input
-;;;
+;;; 
 tick_sample_R
+		;; debounce clock line and return 1 on low-high change
 		pagesel $
 		btfss	SHADOW_BIT_CLOCK
 		goto	tick_sample_off
 tick_sample_on
+		;; input line high: count up to debounce count
+		;; if reached, return 1 once and set bit 7
+		;; to remember the low-high change has been
+		;; signalled to caller
 		btfsc	tick_state,7
 		retlw	0
 		incf	tick_state,f
@@ -443,50 +550,62 @@ tick_sample_on
 		bsf		tick_state,7
 		retlw	1
 tick_sample_off
+		;; input line low: clear tick state
 		clrf	tick_state
 		retlw	0
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; 	Clock Tick. Count BCD coded shadow registers by one
-;;;
-;;; 	* description:
-;;; 	  maintain clock counting and manual setting of hours and minutes
-;;; 	* input: none
-;;; 	* output: none
-;;; 	* local variables: reg_a
-
+;;; Clock Tick. Count up clock_sec, clock_min, clock_hour register.
+;;; Does clock counting and manual setting of hours and minutes.
+;;; * input: none
+;;; * output: none
+;;; * local variables: reg_a
+;;; 
+;;; Entry point for manual minute setting. The difference is
+;;; that when setting minutes manually, there should be no
+;;; overflow to hourse, like a regular clock tick would do. So
+;;; we record the the fact in bit 0 of reg_a and use the standard
+;;; minute increasing function, that knows about this bit.
 clock_tick_minutes_manual_R
 		bcf		reg_a,0			; clear bit 0 of reg_a to indicate this
 								; is manual
 		goto	clock_tick_minutes
 
+;;; Increment seconds counter, to be called every second
 clock_tick_seconds_R
 		bsf		reg_a,0			; set bit 0 of reg_a to indicate we're
 								; called from timer input
 		incf	clock_sec,f
 		movfw	clock_sec
+		;; if count == 60, fall through to increase minute
+		;; and reset to 0
 		xorlw	.60
 		btfss	STATUS,Z
 		retlw	1
 	
 clock_tick_minutes
-		;; 		Minutes
 		clrf	clock_sec
 		incf	clock_min,f
 		movfw	clock_min
+		;; if count == 60, fall through to increase hours
 		xorlw	.60
 		btfss	STATUS,Z
 		retlw	1
 
-		;; 		Hours
+		;; reset minutes to 0. if this was manual setting,
+		;; return. Otherwise fall through to inc hours
 		clrf	clock_min
 		btfss	reg_a,0			; cleared bit 0 indicates manual setting
 		retlw	1
 
 clock_tick_hours_manual_R
+		;; entry point for manual hour setting but also fall through
+		;; from minute overflow
 		incf	clock_hour,f
 		movfw	clock_hour
+		;; if count == 24, reset to 0. Please not we do always
+		;; 24 hour here and convert to 12 hour on output.
 		xorlw	.24
 		btfss	STATUS,Z
 		retlw	1
@@ -497,12 +616,21 @@ clock_tick_hours_manual_R
 
 ;;; 
 ;;; Mode State Switch
-;;;
-;;; - description: handle switch modes, especially configuration mode
-;;;                and clock mode
+;;; 
+;;; Handle clock modes, especially configuration mode
+;;; and clock mode.
+;;; 
 ;;; - input:  none
 ;;; - output: W: action bit field
 ;;;
+;;; reg_a is used to indicate the input event. There are
+;;; multiple functions for various events that set a bit
+;;; in reg_a and jump into mode_state_switch, which will
+;;; then jump into the function reponsible for the current
+;;; state
+;;; 
+;;; Depending on state and input event we do a state transition
+;;; or return an action event 
 
 mode_state_switch_init_R
 		clrf	reg_a
@@ -523,6 +651,9 @@ mode_state_switch_3_R
 		bsf		reg_a, MODE_EVENT_SW3
 		goto	mode_state_switch
 
+;;; jump to function for current state
+;;; state might be on of the settings or
+;;; the clock display mode. 
 mode_state_switch
 		bcf		STATUS,C
 		btfsc	mode_state,MODE_STATE_CLOCK
@@ -537,6 +668,9 @@ mode_state_switch
 		bsf		mode_state,MODE_STATE_CLOCK
 		goto	mode_state_switch
 
+;;; 
+;;; CLOCK STATE
+;;; 
 mode_state_clock
 		btfsc	reg_a, MODE_EVENT_SW1
 		goto	mode_state_clock_sw1
@@ -557,7 +691,10 @@ mode_state_clock_sw3
 		clrf	mode_state
 		bsf		mode_state,MODE_STATE_BRIGHTNESS
 		goto	mode_state_ret_idle
-		
+
+;;;
+;;; BRIGHTNESS SETTING STATE
+;;; 
 mode_state_brightness
 		btfsc	reg_a, MODE_EVENT_SW1
 		goto	mode_state_brightness_sw1
@@ -581,6 +718,9 @@ mode_state_brightness_sw3
 		bsf		mode_state,MODE_STATE_CLOCK
 		goto	mode_state_ret_idle
 
+;;;
+;;; SECONDS SETTING STATE - whether to display seconds
+;;; 
 mode_state_seconds
 		btfsc	reg_a, MODE_EVENT_SW1
 		goto	mode_state_seconds_sw1
@@ -604,6 +744,9 @@ mode_state_seconds_sw3
 		bsf		mode_state,MODE_STATE_CLOCK
 		goto	mode_state_ret_idle
 
+;;;
+;;; 12 HOUR SETTING STATE
+;;; 
 mode_state_12hour
 		btfsc	reg_a, MODE_EVENT_SW1
 		goto	mode_state_12hour_sw1
@@ -627,7 +770,9 @@ mode_state_12hour_sw3
 		bsf		mode_state,MODE_STATE_CLOCK
 		goto	mode_state_ret_idle
 
-		
+;;;
+;;; Return Action bitmask
+;;; 
 mode_state_ret_idle
 		retlw	0
 
@@ -729,6 +874,12 @@ wait_for_tmr0
 		pagesel $
 
 ;;;;;;; Output state switch ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; TODO:
+;;; Duty cycle handling shoud be an additional counting state
+;;; In the output state switch. With the current implementation
+;;; it seems the output state might be advanced two cycles and then
+;;; paused two cycles, which is not intended
 
 		;; 		Handle duty cycle
 		incf	output_state_wait_counter,f
@@ -854,6 +1005,11 @@ switch_handle_actions
 		pagesel	$
 
 ;;;;;;;  100HZ tick handling ;;;:::;;;;;;;;;;;;;;;;;;;;;;
+		
+;;; Button state machines receive 100HZ tick events in
+;;; order to implement autorepeat. So there are two places
+;;; where action can be generated, either on state transition
+;;; or by staying in a state for a certain amount of time.
 
 		;;		Tick input
 		call	tick_sample
@@ -870,6 +1026,8 @@ switch_handle_actions
 		call	button_fsm_tick
 		pagesel $
 		btfsc	button_fsm_result,BUTTON_DOWN
+		;;		TODO: calling clock_tick_minutes directly here seems
+		;; 		wrong, since we don't consider mode state here
 		call	clock_tick_minutes_manual
 		pagesel $
 
@@ -879,6 +1037,8 @@ switch_handle_actions
 		call	button_fsm_tick
 		pagesel	$
 		btfsc	button_fsm_result,BUTTON_DOWN
+		;;		TODO: calling clock_tick_minutes directly here seems
+		;; 		wrong, since we don't consider mode state here
 		call	clock_tick_hours_manual
 		pagesel $
 
