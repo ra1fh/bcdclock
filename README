@@ -18,10 +18,14 @@ can be programmed to the device.
 Simulation
 ----------
 
-Simulation requires gpsim with 16F505 support, which is currently not
-available in the released gpsim version. To run the simulation:
+Simulation requires gpsim version 0.28.1 which includes 16F505
+support. To run the simulation:
 
     $ make sim
+
+The simulation requires the demux module which is part of this
+repository. It will automatically be compiled when the simulation is
+started with the above command.
 
 Usage
 -----
