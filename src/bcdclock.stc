@@ -19,6 +19,7 @@
 
 # Processor position:
 module library libgpsim_modules.so.0.0
+module library ./demux.so.0
 load p16f505 bcdclock.cod
 
 # Modules:
