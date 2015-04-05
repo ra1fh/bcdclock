@@ -9,16 +9,16 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="60.243305mm"
-   height="46.286247mm"
-   viewBox="0 0 213.46053 164.00639"
+   width="50.243305mm"
+   height="36.286247mm"
+   viewBox="0 0 178.02746 128.57332"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="programmer.svg"
    inkscape:export-filename="/home/ralf/projekte/pic/bcdclock/doc/programmer.png"
-   inkscape:export-xdpi="403.94"
-   inkscape:export-ydpi="403.94">
+   inkscape:export-xdpi="404.42999"
+   inkscape:export-ydpi="404.42999">
   <defs
      id="defs4">
     <marker
@@ -71,18 +71,18 @@
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.6"
-     inkscape:cx="130.33062"
-     inkscape:cy="74.027544"
+     inkscape:zoom="1.979899"
+     inkscape:cx="112.61408"
+     inkscape:cy="56.311003"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     fit-margin-top="10"
-     fit-margin-right="10"
-     fit-margin-bottom="10"
-     fit-margin-left="10"
+     fit-margin-top="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5"
+     fit-margin-left="5"
      inkscape:window-width="956"
      inkscape:window-height="1117"
      inkscape:window-x="0"
@@ -104,7 +104,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-148.98402,-219.64473)">
+     transform="translate(-166.70056,-237.36126)">
     <path
        inkscape:connector-curvature="0"
        d="m 213.16803,273.30142 10.62992,3.5433 -10.62992,3.5433 0,-7.0866 z"
