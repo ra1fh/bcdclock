@@ -20,7 +20,7 @@ $(DEMUX): demux.o
 	g++ -shared -fPIC -DPIC demux.o -o $(DEMUX)
 
 demux.o: demux.cc
-	g++ -O2 -pipe -DHAVE_GUI -c demux.cc -o demux.o $$(pkg-config --cflags gtk+-2.0)
+	g++ -O2 -DPIC -fPIC -pipe -DHAVE_GUI -c demux.cc -o demux.o $$(pkg-config --cflags gtk+-2.0)
 
 $(HEX): $(OBJ)
 	gplink -c -ainhx32 -m -o $(HEX) $(OBJ)
