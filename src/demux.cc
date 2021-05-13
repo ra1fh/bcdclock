@@ -19,6 +19,7 @@
 #define IN_MODULE
 
 #include <errno.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string>
 
@@ -46,8 +47,8 @@ void Logic_Input::setDrivenState( bool new_state)
 {
 
 	if (verbose) {
-		cout << name()<< " setDrivenState= "
-			 << (new_state ? "high" : "low") << endl;
+		std::cout << name()<< " setDrivenState= "
+				  << (new_state ? "high" : "low") << std::endl;
 	}
 
 	if (new_state != getDrivenState()) {
@@ -110,20 +111,25 @@ void Demux::create_iopin_map()
 	m_IN  = new Logic_Input *[3];
 	m_OUT = new Logic_Output *[8];
 
-	m_IN[0] = new Logic_Input(this, 0, "Demux.S0");
-	m_IN[1] = new Logic_Input(this, 1, "Demux.S1");
-	m_IN[2] = new Logic_Input(this, 2, "Demux.S2");
+	m_IN[0] = new Logic_Input(this, 0, "S0");
+	m_IN[1] = new Logic_Input(this, 1, "S1");
+	m_IN[2] = new Logic_Input(this, 2, "S2");
 
-	m_OUT[0] = new Logic_Output(this, 3, "Demux.Y0");
-	m_OUT[1] = new Logic_Output(this, 4, "Demux.Y1");
-	m_OUT[2] = new Logic_Output(this, 5, "Demux.Y2");
-	m_OUT[3] = new Logic_Output(this, 6, "Demux.Y3");
-	m_OUT[4] = new Logic_Output(this, 7, "Demux.Y4");
-	m_OUT[5] = new Logic_Output(this, 8, "Demux.Y5");
-	m_OUT[6] = new Logic_Output(this, 9, "Demux.Y6");
-	m_OUT[7] = new Logic_Output(this,10, "Demux.Y7");
+	for (i = 0; i <= 2; ++i) {
+		addSymbol(m_IN[i]);
+	}
+
+	m_OUT[0] = new Logic_Output(this, 3, "Y0");
+	m_OUT[1] = new Logic_Output(this, 4, "Y1");
+	m_OUT[2] = new Logic_Output(this, 5, "Y2");
+	m_OUT[3] = new Logic_Output(this, 6, "Y3");
+	m_OUT[4] = new Logic_Output(this, 7, "Y4");
+	m_OUT[5] = new Logic_Output(this, 8, "Y5");
+	m_OUT[6] = new Logic_Output(this, 9, "Y6");
+	m_OUT[7] = new Logic_Output(this,10, "Y7");
 
 	for (i=0; i<=7; i++) {
+		addSymbol(m_OUT[i]);
 		m_OUT[i]->update_direction(1,true);  // make the bidirectional an output
 	}
 

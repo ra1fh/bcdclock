@@ -36,7 +36,7 @@ class Logic_Input : public IOPIN
 	
 	public:
 	virtual void setDrivenState( bool new_state);
-	Logic_Input (Demux *parent, unsigned int b, const char *opt_name=0)
+	Logic_Input (Demux *parent, unsigned int b, const char *opt_name=nullptr)
 		: IOPIN(opt_name), Parent(parent), m_iobit(b)
     {
     }
@@ -49,7 +49,7 @@ class Logic_Output : public IO_bi_directional
 	unsigned int m_iobit;
 	
 	public:
-	Logic_Output (Demux *parent, unsigned int b,const char *opt_name=0)
+	Logic_Output (Demux *parent, unsigned int b,const char *opt_name=nullptr)
 		: IO_bi_directional(opt_name), Parent(parent), m_iobit(b)
     {
     }

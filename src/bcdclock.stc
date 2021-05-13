@@ -30,9 +30,9 @@ p16f505.WarnMode = true
 p16f505.xpos = 216
 p16f505.ypos = 72
 
-module load demux demux
-demux.xpos = 216
-demux.ypos = 204
+module load demux Demux
+Demux.xpos = 216
+Demux.ypos = 204
 
 module load and2 and2_26
 and2_26.xpos = 612
